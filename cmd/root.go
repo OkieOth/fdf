@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -28,12 +30,30 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&searchRoot, "searchRoot", "", "Root directory to search for duplicates")
 	RootCmd.PersistentFlags().StringSliceVar(&whiteList, "whitelist", make([]string, 0), "Files to include via whitelist")
 	RootCmd.PersistentFlags().StringSliceVar(&blackList, "blacklist", make([]string, 0), "Files to exclude via blacklist")
-	RootCmd.MarkPersistentFlagRequired("source")
 	RootCmd.MarkPersistentFlagDirname("source")
-	RootCmd.MarkPersistentFlagRequired("searchRoot")
 	RootCmd.MarkPersistentFlagDirname("searchRoot")
 }
 
-func persistentFlagsAreOk() bool {
-	return false // TODO
+func arePersistentFlagsOk() (bool, []string) {
+	checkDir := func(flagName string, dir string, isOk *bool, messages *[]string) {
+		if dir == "" {
+			*messages = append(*messages, fmt.Sprintf("'%s' flag is required, but is missing", flagName))
+			*isOk = false
+		} else {
+			if fileInfo, err := os.Stat(dir); err != nil {
+				*messages = append(*messages, fmt.Sprintf("can't access '%s' (%s): %v", flagName, dir, err))
+				*isOk = false
+			} else {
+				if !fileInfo.IsDir() {
+					*messages = append(*messages, fmt.Sprintf("'%s' (%s) seems to be no directory, but is required as one", flagName, sourceDir))
+					*isOk = false
+				}
+			}
+		}
+	}
+	messages := make([]string, 0)
+	isOk := true
+	checkDir("sourceDir", sourceDir, &isOk, &messages)
+	checkDir("searchRoot", searchRoot, &isOk, &messages)
+	return isOk, messages // TODO
 }
