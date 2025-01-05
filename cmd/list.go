@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/okieoth/fdf/internal/pkg/cmdimpl"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +18,6 @@ var ListCmd = &cobra.Command{
 			fmt.Println(messages)
 			os.Exit(1)
 		}
-		fmt.Println("TODO - List found duplicate files")
+		cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList)
 	},
 }
