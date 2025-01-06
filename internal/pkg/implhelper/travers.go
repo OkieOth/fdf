@@ -30,8 +30,11 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 	defer close(foundChan)
 	handleFile := func(fileName string, wg *sync.WaitGroup, foundChan chan<- TraversResponse) {
 		defer wg.Done()
-		fmt.Println("handleFile: ", fileName) // FIXME, DEBUG
-		// TODO - calc md5 and report it back
+		if md5, err := GetMd5(fileName); err == nil {
+			foundChan <- FoundTraversResponse(fileName, md5)
+		} else {
+			foundChan <- ErrorTraversResponse(err)
+		}
 	}
 	handleDir := func(dirName string, wg *sync.WaitGroup) {
 		defer wg.Done()

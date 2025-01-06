@@ -30,22 +30,20 @@ func NewFileRepo() *FileRepo {
 func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteList []string) error {
 	resp := make(chan TraversResponse)
 	var err error
-	go func() {
-		for r := range resp {
-			if r.err != nil {
-				err = r.err
+	go TraversDir(sourceDir, blackList, whiteList, resp)
+	for r := range resp {
+		if r.err != nil {
+			err = r.err
+		} else {
+			if v, exist := f.repo[r.md5]; exist {
+				// Entry with that md5 is already there
+				v.duplicates = append(v.duplicates, r.file)
 			} else {
-				if v, exist := f.repo[r.md5]; exist {
-					// Entry with that md5 is already there
-					v.duplicates = append(v.duplicates, r.file)
-				} else {
-					// save new entry
-					f.repo[r.md5] = NewFileRepoEntry(r.file)
-				}
+				// save new entry
+				f.repo[r.md5] = NewFileRepoEntry(r.file)
 			}
 		}
-	}()
-	TraversDir(sourceDir, blackList, whiteList, resp)
+	}
 	return err
 }
 
