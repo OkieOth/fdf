@@ -1,9 +1,10 @@
 package implhelper
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 )
 
@@ -26,6 +27,41 @@ func ErrorTraversResponse(err error) TraversResponse {
 	}
 }
 
+func blackWhileListMatch(patternToMatch string, path string) bool {
+	if strings.Contains(patternToMatch, "*") {
+		// *.jpeg; IMG*.j*
+		tmp := regexp.QuoteMeta(patternToMatch)
+		regexpStr := strings.ReplaceAll(tmp, `\*`, ".*")
+		r := regexp.MustCompile(regexpStr)
+		return r.Match([]byte(path))
+
+	} else {
+		return strings.Contains(path, patternToMatch)
+	}
+}
+
+func shouldBeProcessed(path string, blackList []string, whiteList []string) bool {
+	if len(blackList) > 0 {
+		for _, b := range blackList {
+			if blackWhileListMatch(b, path) {
+				return false
+			}
+		}
+		return true
+	} else {
+		if len(whiteList) > 0 {
+			for _, b := range whiteList {
+				if blackWhileListMatch(b, path) {
+					return true
+				}
+			}
+			return false
+		} else {
+			return true
+		}
+	}
+}
+
 func TraversDir(dir string, blackList []string, whiteList []string, foundChan chan<- TraversResponse) {
 	defer close(foundChan)
 	handleFile := func(fileName string, wg *sync.WaitGroup, foundChan chan<- TraversResponse) {
@@ -38,17 +74,17 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 	}
 	handleDir := func(dirName string, wg *sync.WaitGroup) {
 		defer wg.Done()
-		fmt.Println("filepath.Walk-1: ", dirName)
 		err := filepath.WalkDir(dirName, func(path string, entry os.DirEntry, err error) error {
-			//fmt.Println("filepath.Walk-2: ", path)
 			if err != nil {
 				return err
 			} else {
 				if path != dirName {
+
 					if !entry.IsDir() {
-						wg.Add(1)
-						//fmt.Println("XXX write to handleFileChan: ", path)
-						go handleFile(path, wg, foundChan)
+						if shouldBeProcessed(path, blackList, whiteList) {
+							wg.Add(1)
+							go handleFile(path, wg, foundChan)
+						}
 					}
 				}
 			}
