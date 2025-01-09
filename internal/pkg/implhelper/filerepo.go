@@ -5,14 +5,14 @@ import (
 )
 
 type FileRepoEntry struct {
-	sourceFile string
-	duplicates []string
+	SourceFile string
+	Duplicates []string
 }
 
 func NewFileRepoEntry(f string) FileRepoEntry {
 	return FileRepoEntry{
-		sourceFile: f,
-		duplicates: make([]string, 0),
+		SourceFile: f,
+		Duplicates: make([]string, 0),
 	}
 }
 
@@ -39,7 +39,7 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 		} else {
 			if v, exist := f.repo[r.md5]; exist {
 				// Entry with that md5 is already there
-				v.duplicates = append(v.duplicates, r.file)
+				v.Duplicates = append(v.Duplicates, r.file)
 			} else {
 				// save new entry
 				f.repo[r.md5] = NewFileRepoEntry(r.file)
@@ -65,4 +65,14 @@ func (f *FileRepo) GetEntry(md5Str string) (FileRepoEntry, bool) {
 
 func (f *FileRepo) Size() int {
 	return len(f.repo)
+}
+
+func (f *FileRepo) Repo() map[string]FileRepoEntry {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+	ret := make(map[string]FileRepoEntry)
+	for k, v := range f.repo {
+		ret[k] = v
+	}
+	return ret
 }

@@ -1,6 +1,7 @@
 package implhelper_test
 
 import (
+	"strings"
 	"testing"
 
 	helper "github.com/okieoth/fdf/internal/pkg/implhelper"
@@ -44,6 +45,25 @@ func TestInitFromSourceBlackListed(t *testing.T) {
 		}
 		if !fileRepo.HasEntry(mainMd5) {
 			t.Error("seems init with blacklist isn't working 2")
+		}
+	}
+}
+
+func TestInitFromSourceWhiteListed(t *testing.T) {
+	whiteList := []string{"*.go"}
+	blackList := []string{}
+	fileRepo := helper.NewFileRepo()
+	if err := fileRepo.InitFromSource("../../..", blackList, whiteList); err != nil {
+		t.Error(err)
+	} else {
+		rs := fileRepo.Size()
+		if rs == 0 {
+			t.Errorf("Seems the fileRepo isn't initialized: %d", rs)
+		}
+		for _, v := range fileRepo.Repo() {
+			if !strings.HasSuffix(v.SourceFile, ".go") {
+				t.Errorf("Found non-go file in the repo: %s", v.SourceFile)
+			}
 		}
 	}
 }
