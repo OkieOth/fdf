@@ -1,0 +1,49 @@
+package implhelper_test
+
+import (
+	"testing"
+
+	helper "github.com/okieoth/fdf/internal/pkg/implhelper"
+)
+
+func TestInitFromSource(t *testing.T) {
+	whiteList := make([]string, 0)
+	blackList := make([]string, 0)
+	fileRepo := helper.NewFileRepo()
+	if err := fileRepo.InitFromSource("../..", blackList, whiteList); err != nil {
+		t.Error(err)
+	} else {
+		rs := fileRepo.Size()
+		if rs == 0 {
+			t.Errorf("Seems the fileRepo isn't initialized: %d", rs)
+		}
+	}
+}
+
+func TestInitFromSourceBlackListed(t *testing.T) {
+	whiteList := make([]string, 0)
+	blackList := []string{"*.mod", "*.sum", "LICENSE", ".git", "README"}
+	fileRepo := helper.NewFileRepo()
+	if err := fileRepo.InitFromSource("../../..", blackList, whiteList); err != nil {
+		t.Error(err)
+	} else {
+		rs := fileRepo.Size()
+		if rs == 0 {
+			t.Errorf("Seems the fileRepo isn't initialized: %d", rs)
+		}
+		readmeMd5, e := helper.GetMd5("../../../README.md")
+		if e != nil {
+			t.Errorf("Error while get md5 for README: %v", e)
+		}
+		if fileRepo.HasEntry(readmeMd5) {
+			t.Error("seems init with blacklist isn't working 1")
+		}
+		mainMd5, e := helper.GetMd5("../../../main.go")
+		if e != nil {
+			t.Errorf("Error while get md5 for main.go: %v", e)
+		}
+		if !fileRepo.HasEntry(mainMd5) {
+			t.Error("seems init with blacklist isn't working 2")
+		}
+	}
+}

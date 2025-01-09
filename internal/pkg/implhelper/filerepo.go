@@ -30,6 +30,8 @@ func NewFileRepo() *FileRepo {
 func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteList []string) error {
 	resp := make(chan TraversResponse)
 	var err error
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
 	go TraversDir(sourceDir, blackList, whiteList, resp)
 	for r := range resp {
 		if r.err != nil {
@@ -45,6 +47,20 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 		}
 	}
 	return err
+}
+
+func (f *FileRepo) HasEntry(md5Str string) bool {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+	_, e := f.repo[md5Str]
+	return e
+}
+
+func (f *FileRepo) GetEntry(md5Str string) (FileRepoEntry, bool) {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+	v, e := f.repo[md5Str]
+	return v, e
 }
 
 func (f *FileRepo) Size() int {
