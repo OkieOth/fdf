@@ -49,6 +49,12 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 	return err
 }
 
+func (f *FileRepo) CheckForDuplicateAndAddInCase(md5Str string, fileName string) {
+	if f.HasEntry(md5Str) {
+		f.SetEntry(md5Str, fileName)
+	}
+}
+
 func (f *FileRepo) HasEntry(md5Str string) bool {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
@@ -61,6 +67,15 @@ func (f *FileRepo) GetEntry(md5Str string) (FileRepoEntry, bool) {
 	defer f.mutex.RUnlock()
 	v, e := f.repo[md5Str]
 	return v, e
+}
+
+func (f *FileRepo) SetEntry(md5Str string, fileName string) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	if v, e := f.repo[md5Str]; e {
+		v.Duplicates = append(v.Duplicates, fileName)
+		f.repo[md5Str] = v
+	}
 }
 
 func (f *FileRepo) Size() int {

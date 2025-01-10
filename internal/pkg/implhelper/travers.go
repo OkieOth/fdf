@@ -99,3 +99,17 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 	go handleDir(dir, &wg)
 	wg.Wait()
 }
+
+func SearchForDuplicates(searchRoot string, blackList []string, whiteList []string, fileRepo *FileRepo, doneChan chan<- *error) {
+	defer close(doneChan)
+	resp := make(chan TraversResponse)
+	go TraversDir(searchRoot, blackList, whiteList, resp)
+	for r := range resp {
+		if r.err != nil {
+			doneChan <- &r.err
+			return
+		} else {
+			fileRepo.CheckForDuplicateAndAddInCase(r.md5, r.file)
+		}
+	}
+}
