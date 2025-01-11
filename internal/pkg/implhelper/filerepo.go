@@ -40,6 +40,7 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 			if v, exist := f.repo[r.md5]; exist {
 				// Entry with that md5 is already there
 				v.Duplicates = append(v.Duplicates, r.file)
+				f.repo[r.md5] = v
 			} else {
 				// save new entry
 				f.repo[r.md5] = NewFileRepoEntry(r.file)
