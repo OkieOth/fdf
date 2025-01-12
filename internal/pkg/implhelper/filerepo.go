@@ -47,9 +47,7 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 				f.repo[r.md5] = NewFileRepoEntry(r.file)
 			}
 		}
-		if !noProgress {
-			progressbar.ProgressOne()
-		}
+		progressbar.ProgressOne()
 	}
 	return err
 }

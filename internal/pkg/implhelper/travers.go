@@ -118,9 +118,7 @@ func SearchForDuplicates(searchRoot string, blackList []string, whiteList []stri
 		} else {
 			fileRepo.CheckForDuplicateAndAddInCase(r.md5, r.file)
 		}
-		if !noProgress {
-			progressbar.ProgressOne()
-		}
+		progressbar.ProgressOne()
 	}
 }
 
