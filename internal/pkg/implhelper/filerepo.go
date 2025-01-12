@@ -92,3 +92,14 @@ func (f *FileRepo) Repo() map[string]FileRepoEntry {
 	}
 	return ret
 }
+
+func (f *FileRepo) HasDuplicates() bool {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+	for _, v := range f.repo {
+		if len(v.Duplicates) > 0 {
+			return true
+		}
+	}
+	return false
+}

@@ -1,0 +1,1 @@
+buildx: go build -o fdf main.go

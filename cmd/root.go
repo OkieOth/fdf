@@ -11,6 +11,7 @@ var sourceDir string
 var searchRoot string
 var whiteList []string
 var blackList []string
+var cpus int
 
 var RootCmd = &cobra.Command{
 	Use:   "fdf",
@@ -28,6 +29,7 @@ func init() {
 	RootCmd.AddCommand(ListCmd)
 	RootCmd.PersistentFlags().StringVar(&sourceDir, "source", "", "Source directory to start for finding required files")
 	RootCmd.PersistentFlags().StringVar(&searchRoot, "searchRoot", "", "Root directory to search for duplicates. If not given then only the source folder is checked")
+	RootCmd.PersistentFlags().IntVar(&cpus, "cpus", 0, "How many CPUs should be used in maximum for the program")
 	RootCmd.PersistentFlags().StringSliceVar(&whiteList, "whitelist", make([]string, 0), "Files to include via whitelist")
 	RootCmd.PersistentFlags().StringSliceVar(&blackList, "blacklist", make([]string, 0), "Files to exclude via blacklist")
 	RootCmd.MarkPersistentFlagDirname("source")

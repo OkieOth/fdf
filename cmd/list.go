@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/okieoth/fdf/internal/pkg/cmdimpl"
 	"github.com/spf13/cobra"
@@ -17,6 +18,9 @@ var ListCmd = &cobra.Command{
 		if isOk, messages := arePersistentFlagsOk(); !isOk {
 			fmt.Println(messages)
 			os.Exit(1)
+		}
+		if cpus != 0 {
+			runtime.GOMAXPROCS(cpus)
 		}
 		cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList)
 	},
