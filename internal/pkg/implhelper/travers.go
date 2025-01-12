@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/okieoth/fdf/internal/pkg/progressbar"
 )
 
 type TraversResponse struct {
@@ -62,14 +64,18 @@ func shouldBeProcessed(path string, blackList []string, whiteList []string) bool
 	}
 }
 
-func TraversDir(dir string, blackList []string, whiteList []string, foundChan chan<- TraversResponse) {
+func TraversDir(dir string, blackList []string, whiteList []string, foundChan chan<- TraversResponse, skipMd5 bool) {
 	defer close(foundChan)
 	handleFile := func(fileName string, wg *sync.WaitGroup, foundChan chan<- TraversResponse) {
 		defer wg.Done()
-		if md5, err := GetMd5(fileName); err == nil {
-			foundChan <- FoundTraversResponse(fileName, md5)
+		if skipMd5 {
+			foundChan <- FoundTraversResponse(fileName, "")
 		} else {
-			foundChan <- ErrorTraversResponse(err)
+			if md5, err := GetMd5(fileName); err == nil {
+				foundChan <- FoundTraversResponse(fileName, md5)
+			} else {
+				foundChan <- ErrorTraversResponse(err)
+			}
 		}
 	}
 	handleDir := func(dirName string, wg *sync.WaitGroup) {
@@ -100,11 +106,11 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 	wg.Wait()
 }
 
-func SearchForDuplicates(searchRoot string, blackList []string, whiteList []string, fileRepo *FileRepo, doneChan chan<- *error) {
+func SearchForDuplicates(searchRoot string, blackList []string, whiteList []string, fileRepo *FileRepo, doneChan chan<- *error, noProgress bool) {
 	defer close(doneChan)
 	resp := make(chan TraversResponse)
 	empty := make([]string, 0)
-	go TraversDir(searchRoot, empty, empty, resp)
+	go TraversDir(searchRoot, empty, empty, resp, false)
 	for r := range resp {
 		if r.err != nil {
 			doneChan <- &r.err
@@ -112,5 +118,25 @@ func SearchForDuplicates(searchRoot string, blackList []string, whiteList []stri
 		} else {
 			fileRepo.CheckForDuplicateAndAddInCase(r.md5, r.file)
 		}
+		if !noProgress {
+			progressbar.ProgressOne()
+		}
 	}
+}
+
+func GetFileCount(sourceDir string, searchRoot string, blackList []string, whiteList []string) int64 {
+	ret := int64(0)
+	traversDirAndCount := func(dir string, blackList []string, whiteList []string) {
+		resp := make(chan TraversResponse)
+		go TraversDir(dir, blackList, whiteList, resp, true)
+		for _ = range resp {
+			ret++
+		}
+	}
+	traversDirAndCount(sourceDir, blackList, whiteList)
+	if searchRoot != "" {
+		empty := make([]string, 0)
+		traversDirAndCount(searchRoot, empty, empty)
+	}
+	return ret
 }

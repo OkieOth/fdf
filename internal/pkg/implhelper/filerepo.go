@@ -1,6 +1,7 @@
 package implhelper
 
 import (
+	"github.com/okieoth/fdf/internal/pkg/progressbar"
 	"sync"
 )
 
@@ -27,12 +28,12 @@ func NewFileRepo() *FileRepo {
 	}
 }
 
-func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteList []string) error {
+func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteList []string, noProgress bool) error {
 	resp := make(chan TraversResponse)
 	var err error
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
-	go TraversDir(sourceDir, blackList, whiteList, resp)
+	go TraversDir(sourceDir, blackList, whiteList, resp, false)
 	for r := range resp {
 		if r.err != nil {
 			err = r.err
@@ -45,6 +46,9 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 				// save new entry
 				f.repo[r.md5] = NewFileRepoEntry(r.file)
 			}
+		}
+		if !noProgress {
+			progressbar.ProgressOne()
 		}
 	}
 	return err

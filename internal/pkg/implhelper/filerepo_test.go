@@ -11,7 +11,7 @@ func TestInitFromSource(t *testing.T) {
 	whiteList := make([]string, 0)
 	blackList := make([]string, 0)
 	fileRepo := helper.NewFileRepo()
-	if err := fileRepo.InitFromSource("../..", blackList, whiteList); err != nil {
+	if err := fileRepo.InitFromSource("../..", blackList, whiteList, true); err != nil {
 		t.Error(err)
 	} else {
 		rs := fileRepo.Size()
@@ -25,7 +25,7 @@ func TestInitFromSourceBlackListed(t *testing.T) {
 	whiteList := make([]string, 0)
 	blackList := []string{"*.mod", "*.sum", "LICENSE", ".git", "README"}
 	fileRepo := helper.NewFileRepo()
-	if err := fileRepo.InitFromSource("../../..", blackList, whiteList); err != nil {
+	if err := fileRepo.InitFromSource("../../..", blackList, whiteList, true); err != nil {
 		t.Error(err)
 	} else {
 		rs := fileRepo.Size()
@@ -53,7 +53,7 @@ func TestInitFromSourceWhiteListed(t *testing.T) {
 	whiteList := []string{"*.go"}
 	blackList := []string{}
 	fileRepo := helper.NewFileRepo()
-	if err := fileRepo.InitFromSource("../../..", blackList, whiteList); err != nil {
+	if err := fileRepo.InitFromSource("../../..", blackList, whiteList, true); err != nil {
 		t.Error(err)
 	} else {
 		rs := fileRepo.Size()

@@ -14,7 +14,7 @@ func TestGetMd5(t *testing.T) {
 	testCases := []TestCases{
 		{
 			filePath: "../../../.gitignore",
-			md5sum:   "8f9270b235499967e357174ffd89de6f",
+			md5sum:   "a945dada977c23b702324087618ea4ee",
 		},
 		{
 			filePath: "../../../LICENSE",
