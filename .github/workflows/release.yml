@@ -1,4 +1,4 @@
-name: Publish docker image
+name: Tag Rrepo
 
 on:
   push:
@@ -27,6 +27,6 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: "refs/tags/$TAG_NAME",
+              ref: ${process.env.TAG_NAME}`,
               sha: context.sha
             })
