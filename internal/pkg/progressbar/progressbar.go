@@ -25,9 +25,13 @@ func Init(maxItems int64, description string) {
 }
 
 func ProgressOne() {
-	bar.Add(1)
+	if bar != nil {
+		bar.Add(1)
+	}
 }
 
 func Description(description string) {
-	bar.Describe(description)
+	if bar != nil {
+		bar.Describe(description)
+	}
 }

@@ -1,0 +1,47 @@
+name: Publish docker image
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tag_repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Extract version from cmd/version.go
+        id: get_version
+        run: |
+          TAG_NAME=$(cat cmd/version.go | grep "const Version" | sed -e 's-.*= "-v-' -e 's-"--')
+          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV
+
+      - name: Authenticate with GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo $GITHUB_TOKEN | gh auth login --with-token
+
+      - name: Create a tag
+        env:
+          TAG_NAME: ${{ env.tag_name }}
+        run: |
+          gh release create $TAG_NAME --notes "Release version $TAG_NAME"
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
