@@ -33,7 +33,7 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 	var err error
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
-	go TraversDir(sourceDir, blackList, whiteList, resp, false)
+	go TraversDir(sourceDir, blackList, whiteList, resp, false, true)
 	for r := range resp {
 		if r.err != nil {
 			err = r.err
@@ -76,8 +76,10 @@ func (f *FileRepo) SetEntry(md5Str string, fileName string) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	if v, e := f.repo[md5Str]; e {
-		v.Duplicates = append(v.Duplicates, fileName)
-		f.repo[md5Str] = v
+		if v.SourceFile != fileName {
+			v.Duplicates = append(v.Duplicates, fileName)
+			f.repo[md5Str] = v
+		}
 	}
 }
 

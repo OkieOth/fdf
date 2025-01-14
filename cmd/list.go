@@ -22,6 +22,6 @@ var ListCmd = &cobra.Command{
 		if cpus != 0 {
 			runtime.GOMAXPROCS(cpus)
 		}
-		cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList, noProgress)
+		cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList, noProgress, true)
 	},
 }

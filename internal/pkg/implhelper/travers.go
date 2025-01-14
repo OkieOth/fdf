@@ -1,6 +1,7 @@
 package implhelper
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -64,7 +65,7 @@ func shouldBeProcessed(path string, blackList []string, whiteList []string) bool
 	}
 }
 
-func TraversDir(dir string, blackList []string, whiteList []string, foundChan chan<- TraversResponse, skipMd5 bool) {
+func TraversDir(dir string, blackList []string, whiteList []string, foundChan chan<- TraversResponse, skipMd5 bool, ignoreSameFiles bool) {
 	defer close(foundChan)
 	handleFile := func(fileName string, wg *sync.WaitGroup, foundChan chan<- TraversResponse) {
 		defer wg.Done()
@@ -89,6 +90,13 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 					if !entry.IsDir() {
 						if shouldBeProcessed(path, blackList, whiteList) {
 							wg.Add(1)
+							if ignoreSameFiles {
+								if absPath, err := filepath.Abs(path); err == nil {
+									path = absPath
+								} else {
+									foundChan <- ErrorTraversResponse(fmt.Errorf("Error while getting fileInfo (path: %s): %v", path, err))
+								}
+							}
 							go handleFile(path, wg, foundChan)
 						}
 					}
@@ -106,11 +114,11 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 	wg.Wait()
 }
 
-func SearchForDuplicates(searchRoot string, blackList []string, whiteList []string, fileRepo *FileRepo, doneChan chan<- *error, noProgress bool) {
+func SearchForDuplicates(searchRoot string, blackList []string, whiteList []string, fileRepo *FileRepo, doneChan chan<- *error, noProgress bool, ignoreSameFiles bool) {
 	defer close(doneChan)
 	resp := make(chan TraversResponse)
 	empty := make([]string, 0)
-	go TraversDir(searchRoot, empty, empty, resp, false)
+	go TraversDir(searchRoot, empty, empty, resp, false, ignoreSameFiles)
 	for r := range resp {
 		if r.err != nil {
 			doneChan <- &r.err
@@ -126,7 +134,7 @@ func GetFileCount(sourceDir string, searchRoot string, blackList []string, white
 	ret := int64(0)
 	traversDirAndCount := func(dir string, blackList []string, whiteList []string) {
 		resp := make(chan TraversResponse)
-		go TraversDir(dir, blackList, whiteList, resp, true)
+		go TraversDir(dir, blackList, whiteList, resp, true, false)
 		for _ = range resp {
 			ret++
 		}
