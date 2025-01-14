@@ -8,7 +8,7 @@ import (
 	"github.com/okieoth/fdf/internal/pkg/progressbar"
 )
 
-func ListImpl(sourceDir string, searchRoot string, blackList []string, whiteList []string, noProgress bool) (*helper.FileRepo, error) {
+func ListImpl(sourceDir string, searchRoot string, blackList []string, whiteList []string, noProgress bool, ignoreSameFiles bool) (*helper.FileRepo, error) {
 	fileRepo := helper.NewFileRepo()
 	if noProgress {
 		progressbar.Init(0, "fdf ist running")
@@ -23,7 +23,7 @@ func ListImpl(sourceDir string, searchRoot string, blackList []string, whiteList
 		if !noProgress {
 			progressbar.Description("Search for duplicates")
 		}
-		go implhelper.SearchForDuplicates(searchRoot, blackList, whiteList, fileRepo, doneChan, noProgress)
+		go implhelper.SearchForDuplicates(searchRoot, blackList, whiteList, fileRepo, doneChan, noProgress, ignoreSameFiles)
 		for e := range doneChan {
 			if e != nil {
 				return fileRepo, fmt.Errorf("Error while search for duplicates: %v", e)
