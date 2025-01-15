@@ -6,8 +6,8 @@ import (
 )
 
 type FileRepoEntry struct {
-	SourceFile string
-	Duplicates []string
+	SourceFile string   `json:"sourceFile,omitempty"`
+	Duplicates []string `json:"duplicates,omitempty"`
 }
 
 func NewFileRepoEntry(f string) FileRepoEntry {
