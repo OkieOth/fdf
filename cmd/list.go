@@ -9,6 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var json bool
+var outputFile string
+
 var ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Prints the found duplicates",
@@ -22,6 +25,11 @@ var ListCmd = &cobra.Command{
 		if cpus != 0 {
 			runtime.GOMAXPROCS(cpus)
 		}
-		cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList, noProgress, true)
+		cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList, noProgress, json, outputFile, true)
 	},
+}
+
+func init() {
+	ListCmd.PersistentFlags().BoolVar(&json, "json", false, "Prints the output in JSON instead of plain text")
+	ListCmd.PersistentFlags().StringVar(&outputFile, "outputFile", "", "Optional filename to print the output in")
 }
