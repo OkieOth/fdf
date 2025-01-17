@@ -1,3 +1,9 @@
+# v0.4.0
+
+* fix 'too many threads' issue when scanning folders with too many large files
+* fix missing output error in case of error while scanning the source dir
+* improve text output
+
 # v0.3.0
 
 * adding 'outputFile' flag to list command
