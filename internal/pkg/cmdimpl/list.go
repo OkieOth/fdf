@@ -18,9 +18,7 @@ func ListImpl(sourceDir string, searchRoot string, blackList []string, whiteList
 	} else {
 		progressbar.Init(implhelper.GetFileCount(sourceDir, searchRoot, blackList, whiteList), "Init file repo")
 	}
-	if err := fileRepo.InitFromSource(sourceDir, blackList, whiteList, noProgress); err != nil {
-		return fileRepo, fmt.Errorf("Error while initialize from sourceDir: %v\n", err)
-	}
+	fileRepo.InitFromSource(sourceDir, blackList, whiteList, noProgress)
 	if searchRoot != "" {
 		doneChan := make(chan *error)
 		if !noProgress {
@@ -29,7 +27,7 @@ func ListImpl(sourceDir string, searchRoot string, blackList []string, whiteList
 		go implhelper.SearchForDuplicates(searchRoot, blackList, whiteList, fileRepo, doneChan, noProgress, ignoreSameFiles)
 		for e := range doneChan {
 			if e != nil {
-				return fileRepo, fmt.Errorf("Error while search for duplicates: %v", e)
+				return fileRepo, fmt.Errorf("error while search for duplicates: %v", e)
 			}
 		}
 	}
@@ -52,18 +50,18 @@ func printOutput(fileRepo *helper.FileRepo, jsonOutput bool, outputFilePath stri
 			duplicates := extractDuplicates(fileRepo.Repo())
 			jsonData, err := json.MarshalIndent(duplicates, "", "  ")
 			if err != nil {
-				return fileRepo, fmt.Errorf("Error while marshalling fileRepo: %v", err)
+				return fileRepo, fmt.Errorf("error while marshalling fileRepo: %v", err)
 			}
 			if outputFilePath != "" {
 				outputFile, err := os.Create(outputFilePath)
 				if err != nil {
-					return fileRepo, fmt.Errorf("Error while creating output file: %v", err)
+					return fileRepo, fmt.Errorf("error while creating output file: %v", err)
 				}
 				defer outputFile.Close()
 
 				_, err = outputFile.Write(jsonData)
 				if err != nil {
-					return fileRepo, fmt.Errorf("Error while writing output file: %v", err)
+					return fileRepo, fmt.Errorf("error while writing output file: %v", err)
 				}
 			} else {
 				fmt.Println(jsonData)
@@ -72,7 +70,7 @@ func printOutput(fileRepo *helper.FileRepo, jsonOutput bool, outputFilePath stri
 			if outputFilePath != "" {
 				outputFile, err := os.Create(outputFilePath)
 				if err != nil {
-					return fileRepo, fmt.Errorf("Error while creating output file: %v", err)
+					return fileRepo, fmt.Errorf("error while creating output file: %v", err)
 				}
 				defer outputFile.Close()
 				outputFile.WriteString("Found file duplicates\n")

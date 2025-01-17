@@ -5,11 +5,15 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 
 	"github.com/okieoth/fdf/internal/pkg/progressbar"
 )
+
+var FileSizeThresholdInMB int64
+var MaxGoRoutines int32
 
 type TraversResponse struct {
 	file string
@@ -72,32 +76,42 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 		if skipMd5 {
 			foundChan <- FoundTraversResponse(fileName, "")
 		} else {
-			if md5, err := GetMd5(fileName); err == nil {
-				foundChan <- FoundTraversResponse(fileName, md5)
+			if fileSize, err := GetFileSize(fileName); err == nil {
+				if fileSize >= FileSizeThresholdInMB*MEGA_BYTE {
+					foundChan <- FoundTraversResponse(fileName, fmt.Sprintf("%d", fileSize))
+				} else {
+					if md5, err := GetMd5(fileName); err == nil {
+						foundChan <- FoundTraversResponse(fileName, md5)
+					} else {
+						foundChan <- ErrorTraversResponse(err)
+					}
+				}
 			} else {
 				foundChan <- ErrorTraversResponse(err)
 			}
 		}
 	}
 	handleDir := func(dirName string, wg *sync.WaitGroup) {
-		defer wg.Done()
 		err := filepath.WalkDir(dirName, func(path string, entry os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			} else {
 				if path != dirName {
-
 					if !entry.IsDir() {
 						if shouldBeProcessed(path, blackList, whiteList) {
-							wg.Add(1)
 							if ignoreSameFiles {
 								if absPath, err := filepath.Abs(path); err == nil {
 									path = absPath
 								} else {
-									foundChan <- ErrorTraversResponse(fmt.Errorf("Error while getting fileInfo (path: %s): %v", path, err))
+									foundChan <- ErrorTraversResponse(fmt.Errorf("error while getting fileInfo (path: %s): %v", path, err))
 								}
 							}
-							go handleFile(path, wg, foundChan)
+							wg.Add(1)
+							if runtime.NumGoroutine() > 1000 {
+								handleFile(path, wg, foundChan)
+							} else {
+								go handleFile(path, wg, foundChan)
+							}
 						}
 					}
 				}
@@ -109,8 +123,7 @@ func TraversDir(dir string, blackList []string, whiteList []string, foundChan ch
 		}
 	}
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go handleDir(dir, &wg)
+	handleDir(dir, &wg)
 	wg.Wait()
 }
 
@@ -134,10 +147,12 @@ func GetFileCount(sourceDir string, searchRoot string, blackList []string, white
 	ret := int64(0)
 	traversDirAndCount := func(dir string, blackList []string, whiteList []string) {
 		resp := make(chan TraversResponse)
-		go TraversDir(dir, blackList, whiteList, resp, true, false)
-		for _ = range resp {
-			ret++
-		}
+		go func() {
+			for _ = range resp {
+				ret++
+			}
+		}()
+		TraversDir(dir, blackList, whiteList, resp, true, false)
 	}
 	traversDirAndCount(sourceDir, blackList, whiteList)
 	if searchRoot != "" {

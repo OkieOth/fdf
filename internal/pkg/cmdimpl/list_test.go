@@ -107,3 +107,23 @@ func TestListImpl_4(t *testing.T) {
 		}
 	}
 }
+
+func TestListImpl_5(t *testing.T) {
+	whiteList := make([]string, 0)
+	blackList := make([]string, 0)
+	sourceDir := "/home/eiko"
+	searchRoot := ""
+
+	if fileRepo, err := cmdimpl.ListImpl(sourceDir, searchRoot, blackList, whiteList, true, false, "", true); err != nil {
+		t.Errorf("Error while searching for duplicates: %v", err)
+	} else {
+		fmt.Println("FileRepo.Size: ", fileRepo.Size())
+		repo := fileRepo.Repo()
+		for _, fre := range repo {
+			if len(fre.Duplicates) != 0 {
+				t.Errorf("Found duplicates for file: %s", fre.SourceFile)
+				continue
+			}
+		}
+	}
+}
