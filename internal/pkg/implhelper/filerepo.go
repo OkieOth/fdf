@@ -1,8 +1,9 @@
 package implhelper
 
 import (
-	"github.com/okieoth/fdf/internal/pkg/progressbar"
 	"sync"
+
+	"github.com/okieoth/fdf/internal/pkg/progressbar"
 )
 
 type FileRepoEntry struct {
@@ -28,15 +29,15 @@ func NewFileRepo() *FileRepo {
 	}
 }
 
-func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteList []string, noProgress bool) error {
-	resp := make(chan TraversResponse)
-	var err error
+func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteList []string, noProgress bool) {
+	resp := make(chan TraversResponse, 100000)
+	// not needed here, because aligned over the channel
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	go TraversDir(sourceDir, blackList, whiteList, resp, false, true)
 	for r := range resp {
 		if r.err != nil {
-			err = r.err
+			// FIXME
 		} else {
 			if v, exist := f.repo[r.md5]; exist {
 				// Entry with that md5 is already there
@@ -47,9 +48,9 @@ func (f *FileRepo) InitFromSource(sourceDir string, blackList []string, whiteLis
 				f.repo[r.md5] = NewFileRepoEntry(r.file)
 			}
 		}
+
 		progressbar.ProgressOne()
 	}
-	return err
 }
 
 func (f *FileRepo) CheckForDuplicateAndAddInCase(md5Str string, fileName string) {

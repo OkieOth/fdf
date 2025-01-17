@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/okieoth/fdf/internal/pkg/implhelper"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,9 @@ var whiteList []string
 var blackList []string
 var cpus int
 var noProgress bool
+
+const MAX_MB_FOR_MD5 = 6
+const MAX_GO_ROUTINES = 1000
 
 var RootCmd = &cobra.Command{
 	Use:   "fdf",
@@ -34,6 +38,8 @@ func init() {
 	RootCmd.PersistentFlags().BoolVar(&noProgress, "noProgress", false, "If set, then no real progress bar is displayed. Could speed up the programm execution.")
 	RootCmd.PersistentFlags().StringSliceVar(&whiteList, "whitelist", make([]string, 0), "Files to include via whitelist")
 	RootCmd.PersistentFlags().StringSliceVar(&blackList, "blacklist", make([]string, 0), "Files to exclude via blacklist")
+	RootCmd.PersistentFlags().Int64Var(&implhelper.FileSizeThresholdInMB, "fileSizeThreshold", MAX_MB_FOR_MD5, "Max filesize in MB to compare via MD5 checksum")
+	RootCmd.PersistentFlags().Int32Var(&implhelper.MaxGoRoutines, "maxGoRoutines", MAX_GO_ROUTINES, "Max number of go routines before skipping parallel processing")
 	RootCmd.MarkPersistentFlagDirname("source")
 }
 

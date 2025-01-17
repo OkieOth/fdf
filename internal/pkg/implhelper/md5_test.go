@@ -33,3 +33,143 @@ func TestGetMd5(t *testing.T) {
 		}
 	}
 }
+
+func TestGetCommonPrefix(t *testing.T) {
+	// Happy cases
+	tests := []struct {
+		s1       string
+		s2       string
+		expected string
+	}{
+		{"hello", "helicopter", "hel"},
+		{"abcdef", "abcxyz", "abc"},
+		{"prefix", "prefixmatch", "prefix"},
+		{"same", "same", "same"},
+		{"short", "shorter", "short"},
+	}
+
+	for _, tt := range tests {
+		t.Run("Happy case: "+tt.s1+" & "+tt.s2, func(t *testing.T) {
+			result := implhelper.GetCommonPrefix(tt.s1, tt.s2)
+			if result != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+
+	// Unhappy cases
+	unhappyTests := []struct {
+		s1       string
+		s2       string
+		expected string
+	}{
+		{"abc", "xyz", ""},
+		{"different", "prefix", ""},
+		{"", "nonempty", ""},
+		{"nonempty", "", ""},
+		{"", "", ""},
+	}
+
+	for _, tt := range unhappyTests {
+		t.Run("Unhappy case: "+tt.s1+" & "+tt.s2, func(t *testing.T) {
+			result := implhelper.GetCommonPrefix(tt.s1, tt.s2)
+			if result != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestAdjustCommonPrefix(t *testing.T) {
+	// Happy Cases
+	t.Run("CommonPrefix", func(t *testing.T) {
+		prefix := "hello"
+		s := "helloworld"
+		expected := "hello"
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("ExactMatch", func(t *testing.T) {
+		prefix := "test"
+		s := "test"
+		expected := "test"
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("ShorterPrefix", func(t *testing.T) {
+		prefix := "go"
+		s := "golang"
+		expected := "go"
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	// Unhappy Cases
+	t.Run("NoCommonPrefix", func(t *testing.T) {
+		prefix := "abc"
+		s := "xyz"
+		expected := ""
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("EmptyPrefix", func(t *testing.T) {
+		prefix := ""
+		s := "anything"
+		expected := ""
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("EmptyString", func(t *testing.T) {
+		prefix := "something"
+		s := ""
+		expected := ""
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("UnicodeCharacters", func(t *testing.T) {
+		prefix := "你好世界"
+		s := "你好golang"
+		expected := "你好"
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("SpecialCharacters", func(t *testing.T) {
+		prefix := "!@#$"
+		s := "!@#abc"
+		expected := "!@#"
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+
+	t.Run("PrefixLongerThanString", func(t *testing.T) {
+		prefix := "longprefix"
+		s := "long"
+		expected := "long"
+		result := implhelper.AdjustCommonPrefix(prefix, s)
+		if result != expected {
+			t.Errorf("Expected %q, got %q", expected, result)
+		}
+	})
+}
