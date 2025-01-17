@@ -85,15 +85,16 @@ func printOutput(fileRepo *helper.FileRepo, jsonOutput bool, outputFilePath stri
 					}
 				}
 			} else {
-				fmt.Println("Found file duplicates")
-				fmt.Println("=================================")
 				for _, fre := range fileRepo.Repo() {
 					if len(fre.Duplicates) > 0 {
-						fmt.Println("File: ", fre.SourceFile)
+						fmt.Println("===================================================================")
+						fmt.Println("| File: ", fre.SourceFile)
+						fmt.Println("|------------------------------------------------------------------")
+						fmt.Println("| Duplicates:")
 						for _, d := range fre.Duplicates {
-							fmt.Println("    ", d)
+							fmt.Println("| ", d)
 						}
-						fmt.Println("---------------------------------")
+						fmt.Println("===================================================================\n")
 					}
 				}
 				fmt.Println()
